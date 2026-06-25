@@ -44,6 +44,20 @@ This studio is specifically optimized for macOS execution:
 
 ---
 
+## 📸 Screenshots
+
+### 🔍 Search & Discovery Dashboard
+<p align="center">
+  <img src="assets/screenshot_search.png" alt="Search Dashboard" width="800" />
+</p>
+
+### 🔄 Universal Audio Converter
+<p align="center">
+  <img src="assets/screenshot_converter.png" alt="Universal Audio Converter" width="800" />
+</p>
+
+---
+
 ## 🗺️ System Architecture
 
 ```mermaid
