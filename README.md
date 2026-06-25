@@ -35,7 +35,7 @@ An elegant, all-in-one AI voice dataset creator custom-tailored for **macOS**. S
 
 ---
 
-## 🍏 macOS Native Tuning
+## 🍏 MacOS Native Tuning
 
 This studio is specifically optimized for macOS execution:
 1. **Apple Silicon Acceleration (MPS)** — Automatically detects and runs ML models on Apple M-series GPUs using PyTorch's Metal Performance Shaders (MPS) for lightning-fast performance.
