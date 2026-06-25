@@ -88,7 +88,7 @@ export function HomePage() {
             </h1>
             <p className="text-muted max-w-xl mx-auto">
               Search any character, celebrity, or voice actor — automatically generate
-              professional-grade voice datasets for TTS training.
+              professional-grade voice datasets for TTS training, Beatrice model training, Rvc model training.
             </p>
           </div>
 
