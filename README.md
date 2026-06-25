@@ -1,4 +1,9 @@
+<p align="center">
+  <img src="assets/logo.jpg" alt="Project Beatrice V2 Logo" width="300" />
+</p>
+
 # 🎙️ Beatrice Dataset WebUI (VoiceForge Dataset Studio)
+
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform Support](https://img.shields.io/badge/Platform-macOS-lightgrey.svg?style=flat&logo=apple)](https://www.apple.com/macos/)
