@@ -1,0 +1,55 @@
+# macOS system files
+.DS_Store
+
+# Python virtual environment
+venv/
+voiceforge-backend/venv/
+.venv/
+env/
+ENV/
+
+# Python cache & testing
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+pytest.ini
+
+# Node / Frontend build & dependencies
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+.npm/
+.eslintcache
+
+# Environment variables
+.env
+voiceforge-backend/.env
+frontend/.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# Databases (SQLite etc.)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+voiceforge-backend/voiceforge.db
+
+# Processing Outputs & Temp files
+voiceforge-backend/tmp/
+voiceforge-backend/static/outputs/
+tmp/
+static/outputs/
+downloads/
+datasets/
+out/
+output/
