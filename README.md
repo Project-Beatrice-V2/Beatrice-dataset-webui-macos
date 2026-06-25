@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.jpg" alt="Project Beatrice V2 Logo" width="300" />
+  <img src="assets/logo.jpg" alt="Project Beatrice V2 Logo" width="150" />
 </p>
 
 # 🎙️ Beatrice Dataset WebUI (VoiceForge Dataset Studio)
