@@ -1,24 +1,43 @@
 #!/bin/bash
+# Beatrice Dataset Studio — starts Redis (if needed), the Celery worker, the FastAPI
+# backend and the web UI. Press Ctrl+C to stop everything.
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 BACKEND="$ROOT/voiceforge-backend"
 FRONTEND="$ROOT/frontend"
 PORT="${VOICEFORGE_PORT:-8001}"
+# The API has no authentication: keep it on this computer unless you know you need otherwise.
+HOST="${VOICEFORGE_HOST:-127.0.0.1}"
 
+if [ ! -x "$BACKEND/venv/bin/python" ]; then
+    echo "ERROR: The Python environment is missing. Run ./setup.sh first."
+    exit 1
+fi
+if [ ! -d "$FRONTEND/node_modules" ]; then
+    echo "ERROR: The web UI dependencies are missing. Run ./setup.sh first."
+    exit 1
+fi
+
+CELERY_PID=""
+API_PID=""
+FRONTEND_PID=""
 cleanup() {
+    trap - SIGINT SIGTERM EXIT
+    echo ""
     echo "Shutting down..."
     kill $CELERY_PID $API_PID $FRONTEND_PID 2>/dev/null
+    wait 2>/dev/null
     exit 0
 }
-trap cleanup SIGINT SIGTERM
+trap cleanup SIGINT SIGTERM EXIT
 
 port_in_use() {
     lsof -i ":$1" -sTCP:LISTEN &>/dev/null
 }
 
-# Pick port — default 8001 to avoid conflict with other apps on 8000
+# Pick the API port: 8001 by default (8000 is often taken by other apps)
 if port_in_use "$PORT"; then
-    echo "WARNING: Port $PORT already in use."
+    echo "WARNING: Port $PORT is already in use."
     for try_port in 8002 8003 8004 8005; do
         if ! port_in_use "$try_port"; then
             PORT=$try_port
@@ -29,19 +48,15 @@ if port_in_use "$PORT"; then
         echo "ERROR: No free port found. Stop other services or set VOICEFORGE_PORT."
         exit 1
     fi
+    echo "Using port $PORT for the API"
 fi
 
-if port_in_use 8000 && [ "$PORT" != "8000" ]; then
-    echo "Note: Port 8000 is used by another app — VoiceForge using port $PORT"
-fi
-
-# Redis — required for Celery job queue
+# Redis — required for the Celery job queue
 start_redis() {
     if redis-cli ping &>/dev/null; then
         echo "Redis already running"
         return 0
     fi
-
     if command -v redis-server &>/dev/null; then
         redis-server --daemonize yes 2>/dev/null
         sleep 1
@@ -50,7 +65,6 @@ start_redis() {
             return 0
         fi
     fi
-
     if command -v brew &>/dev/null && brew list redis &>/dev/null; then
         brew services start redis 2>/dev/null
         sleep 2
@@ -59,56 +73,48 @@ start_redis() {
             return 0
         fi
     fi
-
     echo ""
-    echo "WARNING: Redis not running — dataset jobs won't process."
+    echo "WARNING: Redis is not running, so dataset jobs won't process."
     echo "  brew install redis && brew services start redis"
     echo ""
     return 1
 }
-
 start_redis
 
-# Ensure Python can import backend modules from Celery worker subprocesses
+# Let Celery worker subprocesses import the backend modules
 export PYTHONPATH="$BACKEND:$PYTHONPATH"
-
-# Prevent macOS fork crashes when using Objective-C runtimes (like PyTorch/MPS) with Celery prefork pool
+# Prevent macOS fork crashes with Objective-C runtimes (PyTorch/MPS)
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
-# Sync frontend env with chosen port
+# The web UI proxies /api and /ws to the backend; tell it which port to use.
+export VOICEFORGE_PORT="$PORT"
 cat > "$FRONTEND/.env" <<EOF
-VITE_API_URL=http://localhost:$PORT
-VITE_WS_URL=ws://localhost:$PORT
+# Written by start.sh: the Vite dev server proxies /api and /ws to the backend on this port.
+VOICEFORGE_PORT=$PORT
 EOF
 
-# Backend
 cd "$BACKEND"
-source venv/bin/activate 2>/dev/null || true
+source venv/bin/activate
 
 echo "Starting Celery worker..."
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # Use solo execution pool on macOS to prevent fork crashes with PyTorch, MPS, and Metal
-    celery -A workers.celery_app worker -P solo --loglevel=info &
-else
-    celery -A workers.celery_app worker --concurrency=2 --loglevel=info &
-fi
+# Solo pool: avoids fork crashes with PyTorch, MPS and Metal
+celery -A workers.celery_app worker -P solo --loglevel=info &
 CELERY_PID=$!
 
-echo "Starting FastAPI server on port $PORT..."
-uvicorn main:app --host 0.0.0.0 --port "$PORT" --reload --reload-exclude "static/*" --reload-exclude "tmp/*" --reload-exclude "*.db" &
+echo "Starting FastAPI server on $HOST:$PORT..."
+uvicorn main:app --host "$HOST" --port "$PORT" &
 API_PID=$!
 
-# Frontend
 cd "$FRONTEND"
-echo "Starting frontend dev server..."
+echo "Starting the web UI..."
 npm run dev &
 FRONTEND_PID=$!
 
 echo ""
-echo "=== VoiceForge Dataset Studio ==="
-echo "  Frontend:  http://localhost:5173"
+echo "=== Beatrice Dataset Studio ==="
+echo "  Web UI:    http://localhost:5173"
 echo "  API:       http://localhost:$PORT"
-echo "  API Docs:  http://localhost:$PORT/docs"
+echo "  API docs:  http://localhost:$PORT/docs"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
